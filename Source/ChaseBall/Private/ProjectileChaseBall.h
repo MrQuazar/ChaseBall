@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "ProjectileChaseBall.generated.h"
 
 class USphereComponent;
@@ -48,6 +50,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Chase")
 	bool CanMove = false;
 
+	UPROPERTY(VisibleAnywhere)
+	UNiagaraComponent* NiagaraComp;
+
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	UNiagaraSystem* ProjectileVFX;
+
 	FVector InitialDirection;
 
 protected:
@@ -58,21 +66,12 @@ private:
 	USphereComponent* Collision;
 
 	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* Mesh;
-
-	UPROPERTY(VisibleAnywhere)
 	USphereComponent* DetectionSphere;
 
 	UPROPERTY()
 	AActor* TargetActor = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "Visual")
-	UMaterialInterface* NormalMat;
-
-	UPROPERTY(EditAnywhere, Category = "Visual")
-	UMaterialInterface* TargetMat;
-
-
+	float const NiagaraScaleConst = 50;
 	void MoveTowardsTarget(float DeltaTime);
 
 	UFUNCTION()

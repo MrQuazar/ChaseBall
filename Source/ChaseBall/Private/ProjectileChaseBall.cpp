@@ -14,10 +14,6 @@ AProjectileChaseBall::AProjectileChaseBall()
 	Collision->SetNotifyRigidBodyCollision(true);
 	Collision->OnComponentHit.AddDynamic(this, &AProjectileChaseBall::OnHit);
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(Collision);
-	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	DetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionSphere"));
 	DetectionSphere->SetupAttachment(RootComponent);
 	DetectionSphere->SetSphereRadius(BaseRadius);
@@ -26,13 +22,23 @@ AProjectileChaseBall::AProjectileChaseBall()
 	DetectionSphere->SetGenerateOverlapEvents(true);
 	DetectionSphere->OnComponentBeginOverlap.AddDynamic(
 		this, &AProjectileChaseBall::OnDetectEnemy);
+
+	NiagaraComp = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp"));
+	NiagaraComp->SetupAttachment(Collision);
+	NiagaraComp->SetAutoActivate(true);
+
+
 }
 
 void AProjectileChaseBall::BeginPlay()
 {
 	Super::BeginPlay();
-
 	SetLifeSpan(LifeTime);
+	if (ProjectileVFX)
+	{
+		NiagaraComp->SetAsset(ProjectileVFX);	
+		NiagaraComp->Activate();
+	}
 }
 
 void AProjectileChaseBall::CreateChargeShot(float ChargeAlpha)
@@ -44,10 +50,13 @@ void AProjectileChaseBall::CreateChargeShot(float ChargeAlpha)
 	Collision->SetSphereRadius(NewRadius);
 	DetectionSphere->SetSphereRadius(NewRadius*1.5f);
 	const float ScaleFactor = NewRadius / BaseRadius;
-	Mesh->SetWorldScale3D(FVector(ScaleFactor));
 
 	// Scale speed (inverse)
 	MoveSpeed = FMath::Lerp(BaseSpeed, MinSpeed, ChargeAlpha);
+
+	// Scale Niagara effect
+	NiagaraComp->SetWorldScale3D(FVector(ScaleFactor));
+	NiagaraComp->SetVariableFloat(TEXT("User.GlobalScale"), ScaleFactor* NiagaraScaleConst);
 }
 
 float AProjectileChaseBall::GetAimAssistRadius() const
@@ -76,7 +85,6 @@ void AProjectileChaseBall::SetTarget(AActor* NewTarget)
 {
 	if (!NewTarget)
 	{
-		Mesh->SetMaterial(0, NormalMat);
 		APawn* OwnerPawn = Cast<APawn>(GetOwner());
 		if (!OwnerPawn)
 			return;
@@ -93,8 +101,11 @@ void AProjectileChaseBall::SetTarget(AActor* NewTarget)
 		}
 	}
 	else {
-		Mesh->SetMaterial(0, TargetMat);
 		TargetActor = NewTarget;
+		NiagaraComp->SetVariableLinearColor(TEXT("User.OriginalColor"), FLinearColor(0,1,1,1));
+		NiagaraComp->SetVariableLinearColor(TEXT("User.OriginalSmokeColor"), FLinearColor::Black);
+		NiagaraComp->SetVariableLinearColor(TEXT("User.OriginalEmberColorMin"), FLinearColor::Blue);
+		NiagaraComp->SetVariableLinearColor(TEXT("User.OriginalEmberColorMax"), FLinearColor::White);
 	}
 	Collision->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 }
