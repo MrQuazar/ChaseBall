@@ -27,17 +27,29 @@ AProjectileChaseBall::AProjectileChaseBall()
 	NiagaraComp->SetupAttachment(Collision);
 	NiagaraComp->SetAutoActivate(true);
 
-
+	AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+	AudioComp->SetupAttachment(RootComponent);
+	AudioComp->bAutoActivate = false;
+	AudioComp->bAllowSpatialization = true;
+	AudioComp->bIsUISound = false;
 }
 
 void AProjectileChaseBall::BeginPlay()
 {
 	Super::BeginPlay();
 	SetLifeSpan(LifeTime);
+
 	if (ProjectileVFX)
 	{
-		NiagaraComp->SetAsset(ProjectileVFX);	
+		NiagaraComp->SetAsset(ProjectileVFX);
 		NiagaraComp->Activate();
+	}
+
+	// Play charging / idle sound
+	if (ChargeSound)
+	{
+		AudioComp->SetSound(ChargeSound);
+		AudioComp->Play();
 	}
 }
 
@@ -108,6 +120,13 @@ void AProjectileChaseBall::SetTarget(AActor* NewTarget)
 		NiagaraComp->SetVariableLinearColor(TEXT("User.OriginalEmberColorMax"), FLinearColor::White);
 	}
 	Collision->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+
+	if (ReleaseSound)
+	{
+		AudioComp->FadeOut(0.2f, 0.f);
+		AudioComp->SetSound(ReleaseSound);
+		AudioComp->FadeIn(0.2f, 1.f);
+	}
 }
 
 void AProjectileChaseBall::MoveTowardsTarget(float DeltaTime)

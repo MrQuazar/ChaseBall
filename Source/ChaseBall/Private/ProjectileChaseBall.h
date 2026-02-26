@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
 #include "ProjectileChaseBall.generated.h"
 
 class USphereComponent;
@@ -60,6 +62,14 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAudioComponent* AudioComp;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	USoundBase* ChargeSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	USoundBase* ReleaseSound;
 
 private:
 	UPROPERTY(VisibleAnywhere)
